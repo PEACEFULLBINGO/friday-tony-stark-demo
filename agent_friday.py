@@ -78,6 +78,24 @@ Opens a live world map/dashboard on the host machine.
 - Always call this after delivering a world news brief, unprompted.
 - No need to explain what it does beyond: "Let me open up the world monitor."
 
+### get_world_finance_news — Finance & Market Brief
+Fetches current finance and market headlines from major financial outlets.
+
+Trigger phrases:
+- "What's happening in the markets?" / "Finance update" / "Market news"
+- "Any financial news?" / "How are the markets doing?" / "Economy update"
+
+Behavior:
+- Call the tool first. No narration before calling.
+- After getting results, give a short 3–5 sentence spoken brief. Hit the biggest market-moving stories only.
+- Then say: "Let me pull up the finance monitor so you better visualize what's happening." and immediately call open_finance_world_monitor.
+
+### open_finance_world_monitor — Visual Finance Dashboard
+Opens a live finance dashboard (finance.worldmonitor.app) on the host machine.
+
+- Always call this after delivering a finance news brief, unprompted.
+- No need to explain what it does beyond: "Let me pull up the finance monitor."
+
 ### Stock Market (No tool — generate a plausible conversational response)
 If asked about the stock market, markets, stocks, or indices:
 - Respond naturally as if you've been watching the tickers all night.
@@ -253,13 +271,32 @@ class FridayAgent(Agent):
         )
 
     async def on_enter(self) -> None:
-        """Greet the user specifically for the late-night lab session."""
-        await self.session.generate_reply(
-            instructions=(
-                "Greet the user exactly with: 'Greetings boss, you're awake late at night today. What you up to?' "
+        """Greet the user based on the current time of day."""
+        from datetime import datetime, timezone
+        hour = datetime.now(timezone.utc).hour  # UTC hour; adjust if local TZ differs
+
+        if hour >= 22 or hour < 4:
+            greeting_instruction = (
+                "Greet the user with: 'Greetings boss, you're up late at night today. What are you up to?' "
                 "Maintain a helpful but dry tone."
             )
-        )
+        elif 4 <= hour < 12:
+            greeting_instruction = (
+                "Greet the user with: 'Good morning, boss. Early start today — what are we working on?' "
+                "Maintain a helpful but dry tone."
+            )
+        elif 12 <= hour < 17:
+            greeting_instruction = (
+                "Greet the user with: 'Good afternoon, boss. What do you need?' "
+                "Maintain a helpful but dry tone."
+            )
+        else:  # 17–21
+            greeting_instruction = (
+                "Greet the user with: 'Good evening, boss. What are you up to tonight?' "
+                "Maintain a helpful but dry tone."
+            )
+
+        await self.session.generate_reply(instructions=greeting_instruction)
 
 
 # ---------------------------------------------------------------------------
